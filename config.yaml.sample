@@ -1,0 +1,10 @@
+host:      iot.eclipse.org
+port:      1883
+use_auth:  false
+username:  username
+password:  password
+publish_topic: mqtt-m5camera/0001
+m5camera_control_url: http://192.168.1.101/control?var=framesize&val=4
+m5camera_capture_url: http://192.168.1.101/capture
+interval: 10
+img_history_dir: ./img_history_dir

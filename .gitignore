@@ -1,0 +1,7 @@
+*~
+*.swp
+*.config
+*.yaml
+*.log
+img_history_dir*
+
