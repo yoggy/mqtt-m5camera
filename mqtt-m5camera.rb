@@ -72,7 +72,7 @@ loop do
         mqtt_publish(json_str)
       
       end
-      $log.debug "capture image...filenaem=" + filename 
+      $log.debug "capture image...filename=" + filename 
 
     rescue Exception => e
       $log.error(e)
