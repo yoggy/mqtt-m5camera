@@ -10,6 +10,7 @@ require 'base64'
 require 'json'
 require 'yaml'
 require 'ostruct'
+require 'benchmark'
 
 def usage
   $stderr.puts "usage #{$0} config.yaml"
@@ -23,7 +24,6 @@ $log = Logger.new(STDOUT)
 $log.level = Logger::DEBUG
 
 $conf = OpenStruct.new(YAML.load_file(ARGV[0]))
-
 
 def mqtt_publish(str)
   conn_opts = {
@@ -41,40 +41,44 @@ def mqtt_publish(str)
   end
 end
 
-# capture setting....
-open($conf.m5camera_control_url).read
-
 # create image backup directory
 FileUtils.mkdir_p($conf.img_history_dir)
 
 loop do
   filename = Time.now.strftime("m5cam-%Y%m%d-%H%M%S.jpg")
 
-  begin
-    open($conf.m5camera_capture_url) do |f|
-      img = f.read
-    
-      # save history
-      path = $conf.img_history_dir + File::Separator + filename
-      open(path, "wb+") do |f|
-        f.write(img)
+  t = Benchmark.realtime do
+    begin
+      # capture setting....
+      open($conf.m5camera_control_url).read
+
+      sleep 0.5
+
+      open($conf.m5camera_capture_url) do |f|
+        img = f.read
+      
+        # save history
+        path = $conf.img_history_dir + File::Separator + filename
+        open(path, "wb+") do |f|
+          f.write(img)
+        end
+
+        b64 = Base64.strict_encode64(img)
+        data_uri_scheme = "data:image/jpeg;base64," + b64
+
+        h = {}
+        h["image"] = data_uri_scheme
+        json_str = h.to_json
+        mqtt_publish(json_str)
+      
       end
+      $log.debug "capture image...filenaem=" + filename 
 
-      b64 = Base64.strict_encode64(img)
-      data_uri_scheme = "data:image/jpeg;base64," + b64
-
-      h = {}
-      h["image"] = data_uri_scheme
-      json_str = h.to_json
-      mqtt_publish(json_str)
-    
+    rescue Exception => e
+      $log.error(e)
     end
-    $log.debug "capture image...filenaem=" + filename 
-
-  rescue Exception => e
-    $log.error(e)
   end
   
-  sleep $conf.interval
+  sleep $conf.interval - t
 end
 
