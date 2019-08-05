@@ -79,6 +79,8 @@ loop do
     end
   end
   
-  sleep $conf.interval - t
+  sleep_t = $conf.interval - t
+  sleep_t = 0 if sleep_t < 0
+  sleep sleep_t
 end
 
